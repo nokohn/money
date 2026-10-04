@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f1f5f9" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+  <circle cx="256" cy="256" r="160" fill="white" opacity="0.1" />
+  <!-- Wallet Body -->
+  <rect x="110" y="160" width="292" height="200" rx="36" fill="url(#cardGrad)" filter="drop-shadow(0 15px 25px rgba(0,0,0,0.25))" />
+  <!-- Wallet Flap -->
+  <path d="M 280 210 L 402 210 C 412 210 420 218 420 228 L 420 292 C 420 302 412 310 402 310 L 280 310 C 255 310 255 210 280 210 Z" fill="#10b981" />
+  <!-- Gold Clasp -->
+  <circle cx="340" cy="260" r="14" fill="#fbbf24" stroke="#d97706" stroke-width="4" />
+  <!-- Coin Emerging -->
+  <circle cx="256" cy="130" r="38" fill="#fbbf24" stroke="#f59e0b" stroke-width="5" />
+  <!-- Kip Symbol on Coin -->
+  <text x="256" y="145" font-size="34" font-family="sans-serif" font-weight="bold" fill="#78350f" text-anchor="middle">₭</text>
+</svg>

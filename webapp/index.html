@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ລາຍຮັບ-ລາຍຈ່າຍ | Personal Finance Manager</title>
+  <meta name="description" content="ແອັບບັນທຶກ ແລະ ຕິດຕາມລາຍຮັບ-ລາຍຈ່າຍ ພາສາລາວ ໃຊ້ງານຟຣີ ຮອງຮັບເງິນກີບ ບາດ ໂດລາ">
+  <meta name="theme-color" content="#10B981">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+
+  <!-- Google Fonts: Noto Sans Lao -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS & Chart.js & Lucide Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans Lao"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Noto Sans Lao', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Hide scrollbars but keep functionality */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col pb-20 md:pb-6 transition-colors duration-200">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+          <i data-lucide="wallet" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight text-slate-900 dark:text-white">ລາຍຮັບ-ລາຍຈ່າຍ</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400">ບັນທຶກງົບປະມານປະຈຳວັນ</p>
+        </div>
+      </div>
+
+      <!-- Action items: Currency Selector & Theme Toggle -->
+      <div class="flex items-center space-x-2">
+        <select id="currencySelector" onchange="changeCurrency(this.value)" class="text-sm font-medium bg-slate-100 dark:bg-slate-800 border-none rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+          <option value="LAK">₭ (LAK)</option>
+          <option value="THB">฿ (THB)</option>
+          <option value="USD">$ (USD)</option>
+        </select>
+
+        <button onclick="toggleDarkMode()" aria-label="Toggle Dark Mode" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <i id="themeIcon" data-lucide="moon" class="w-5 h-5"></i>
+        </button>
+
+        <button id="pwaInstallBtn" onclick="installPWA()" class="hidden md:flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-lg hover:bg-emerald-100 transition">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>ຕິດຕັ້ງແອັບ</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-5xl w-full mx-auto px-4 py-5 flex-1 space-y-6">
+
+    <!-- Overview Financial Balance Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Net Balance -->
+      <div class="bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-2xl p-5 shadow-lg shadow-emerald-600/20 relative overflow-hidden">
+        <div class="absolute -right-4 -bottom-4 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex justify-between items-start">
+          <span class="text-emerald-100 text-sm font-medium">ຍອດເງິນຄົງເຫຼືອທັງໝົດ</span>
+          <span class="p-1.5 bg-white/20 rounded-lg"><i data-lucide="credit-card" class="w-4 h-4"></i></span>
+        </div>
+        <div class="mt-3">
+          <h2 id="totalBalanceDisplay" class="text-2xl md:text-3xl font-bold tracking-tight">₭ 0</h2>
+          <p id="periodDisplay" class="text-xs text-emerald-200 mt-1">ສະຫຼຸບຕາມຊ່ວງເວລາທີ່ເລືອກ</p>
+        </div>
+      </div>
+
+      <!-- Total Income -->
+      <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm">
+        <div class="flex justify-between items-start">
+          <span class="text-slate-500 dark:text-slate-400 text-sm font-medium">ລາຍຮັບລວມ</span>
+          <span class="p-1.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 rounded-lg"><i data-lucide="arrow-down-left" class="w-4 h-4"></i></span>
+        </div>
+        <div class="mt-3">
+          <h3 id="totalIncomeDisplay" class="text-xl md:text-2xl font-bold text-emerald-600 dark:text-emerald-400">₭ 0</h3>
+          <p id="incomeCountDisplay" class="text-xs text-slate-400 mt-1">0 ລາຍການ</p>
+        </div>
+      </div>
+
+      <!-- Total Expense -->
+      <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm">
+        <div class="flex justify-between items-start">
+          <span class="text-slate-500 dark:text-slate-400 text-sm font-medium">ລາຍຈ່າຍລວມ</span>
+          <span class="p-1.5 bg-rose-100 dark:bg-rose-950/50 text-rose-600 rounded-lg"><i data-lucide="arrow-up-right" class="w-4 h-4"></i></span>
+        </div>
+        <div class="mt-3">
+          <h3 id="totalExpenseDisplay" class="text-xl md:text-2xl font-bold text-rose-600 dark:text-rose-400">₭ 0</h3>
+          <p id="expenseCountDisplay" class="text-xs text-slate-400 mt-1">0 ລາຍການ</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Monthly Budget Alert & Progress Section -->
+    <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="p-2 bg-amber-100 dark:bg-amber-950/50 text-amber-600 rounded-lg">
+            <i data-lucide="target" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-sm md:text-base">ແຜນງົບປະມານລາຍຈ່າຍເດືອນນີ້</h3>
+            <p id="budgetSubtitle" class="text-xs text-slate-500">ໃຊ້ໄປແລ້ວ 0%</p>
+          </div>
+        </div>
+        <button onclick="openBudgetModal()" class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline flex items-center space-x-1">
+          <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+          <span>ຕັ້ງເປົ້າໝາຍ</span>
+        </button>
+      </div>
+
+      <div class="mt-4">
+        <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+          <div id="budgetProgressBar" class="bg-emerald-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+        <div class="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400 mt-2">
+          <span id="budgetSpentText">ໃຊ້ຈ່າຍ: ₭ 0</span>
+          <span id="budgetLimitText">ງົບປະມານ: ₭ 0</span>
+        </div>
+        <div id="budgetWarningBox" class="hidden mt-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-200 flex items-center space-x-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 text-amber-600"></i>
+          <span id="budgetWarningMessage">ທ່ານໃຊ້ຈ່າຍເກີນ 80% ຂອງງົບປະມານທີ່ຕັ້ງໄວ້ແລ້ວ!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visual Charts Breakdown Section -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Category Breakdown Donut Chart -->
+      <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-sm md:text-base flex items-center space-x-2">
+            <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-500"></i>
+            <span>ສັດສ່ວນລາຍຈ່າຍຕາມໝວດໝູ່</span>
+          </h3>
+        </div>
+        <div class="relative flex-1 min-h-[220px] flex items-center justify-center">
+          <canvas id="categoryChart"></canvas>
+          <div id="noChartData" class="hidden text-center text-slate-400 text-xs py-8">
+            ຍັງບໍ່ມີຂໍ້ມູນລາຍຈ່າຍໃນຊ່ວງເວລານີ້
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly Trends Comparison Bar Chart -->
+      <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-2xl p-5 shadow-sm flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-sm md:text-base flex items-center space-x-2">
+            <i data-lucide="bar-chart-3" class="w-4 h-4 text-teal-500"></i>
+            <span>ລາຍຮັບ ທຽບກັບ ລາຍຈ່າຍ (6 ເດືອນຫຼ້າສຸດ)</span>
+          </h3>
+        </div>
+        <div class="relative flex-1 min-h-[220px] flex items-center justify-center">
+          <canvas id="trendsChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters, Search & Recent Transactions Header -->
+    <section class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center space-x-2">
+          <h2 class="text-lg font-bold">ປະຫວັດລາຍການ</h2>
+          <span id="filteredItemsCount" class="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold">0</span>
+        </div>
+
+        <!-- Quick Period Filter Pills -->
+        <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar py-1">
+          <button onclick="setFilterPeriod('all')" class="period-filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-600 text-white transition" data-period="all">ທັງໝົດ</button>
+          <button onclick="setFilterPeriod('month')" class="period-filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition" data-period="month">ເດືອນນີ້</button>
+          <button onclick="setFilterPeriod('week')" class="period-filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition" data-period="week">ອາທິດນີ້</button>
+          <button onclick="setFilterPeriod('today')" class="period-filter-btn px-3 py-1.5 rounded-full text-xs font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition" data-period="today">ມື້ນີ້</button>
+        </div>
+      </div>
+
+      <!-- Search, Type Filter & Export Options -->
+      <div class="flex flex-col sm:flex-row items-center gap-3">
+        <div class="relative w-full sm:flex-1">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input type="text" id="searchInput" oninput="renderTransactions()" placeholder="ຄົ້ນຫາຕາມລາຍລະອຽດ, ໝວດໝູ່..." class="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
+          <select id="typeFilter" onchange="renderTransactions()" class="text-xs font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="ALL">ທຸກປະເພດ</option>
+            <option value="EXPENSE">ລາຍຈ່າຍເທົ່ານັ້ນ</option>
+            <option value="INCOME">ລາຍຮັບເທົ່ານັ້ນ</option>
+          </select>
+
+          <!-- Export CSV & Backup -->
+          <button onclick="exportToCSV()" title="ດາວໂຫຼດ Excel/CSV" class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/60 rounded-xl text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center space-x-1.5 transition">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+            <span class="hidden sm:inline">Export Excel</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Transaction List Container -->
+      <div id="transactionList" class="space-y-2.5">
+        <!-- Dynamic Items will be rendered here -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Add Transaction Button (Mobile & Desktop) -->
+  <button onclick="openTransactionModal()" class="fixed right-5 bottom-20 md:bottom-8 z-40 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white font-medium px-5 py-3.5 rounded-full shadow-lg shadow-emerald-500/30 flex items-center space-x-2 hover:scale-105 active:scale-95 transition-all">
+    <i data-lucide="plus" class="w-5 h-5"></i>
+    <span class="font-semibold text-sm">ບັນທຶກລາຍການ</span>
+  </button>
+
+  <!-- Mobile Bottom Quick Navigation Bar -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-6 py-2.5 flex justify-around items-center">
+    <button onclick="scrollToTop()" class="flex flex-col items-center text-emerald-600 dark:text-emerald-400">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">ໜ້າຫຼັກ</span>
+    </button>
+    <button onclick="openTransactionModal()" class="flex flex-col items-center text-slate-500 hover:text-emerald-600">
+      <i data-lucide="plus-circle" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">ເພີ່ມລາຍການ</span>
+    </button>
+    <button onclick="openBudgetModal()" class="flex flex-col items-center text-slate-500 hover:text-emerald-600">
+      <i data-lucide="pie-chart" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">ງົບປະມານ</span>
+    </button>
+    <button onclick="openBackupModal()" class="flex flex-col items-center text-slate-500 hover:text-emerald-600">
+      <i data-lucide="hard-drive" class="w-5 h-5"></i>
+      <span class="text-[10px] mt-1 font-medium">ສຳຮອງຂໍ້ມູນ</span>
+    </button>
+  </nav>
+
+  <!-- Modal: Add / Edit Transaction -->
+  <div id="txModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+        <h3 id="txModalTitle" class="font-bold text-lg">ເພີ່ມລາຍການໃໝ່</h3>
+        <button onclick="closeTransactionModal()" class="p-1 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Type Switcher Tabs (Expense vs Income) -->
+      <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl">
+        <button type="button" id="tabExpense" onclick="setTxType('EXPENSE')" class="py-2 text-sm font-semibold rounded-lg bg-rose-500 text-white shadow-sm transition">ລາຍຈ່າຍ (Expense)</button>
+        <button type="button" id="tabIncome" onclick="setTxType('INCOME')" class="py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-300 transition">ລາຍຮັບ (Income)</button>
+      </div>
+
+      <form id="txForm" onsubmit="handleSaveTransaction(event)" class="space-y-4">
+        <input type="hidden" id="txId">
+
+        <!-- Amount Input -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">ຈຳນວນເງິນ *</label>
+          <div class="relative">
+            <span id="txCurrencyPrefix" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-slate-400">₭</span>
+            <input type="number" id="txAmount" required min="1" step="any" placeholder="0.00" class="w-full pl-9 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+        </div>
+
+        <!-- Category Selector -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">ໝວດໝູ່ *</label>
+          <select id="txCategory" required class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <!-- Dynamic Category Options will be inserted here -->
+          </select>
+        </div>
+
+        <!-- Date & Payment Method Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">ວັນທີ *</label>
+            <input type="date" id="txDate" required class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">ວິທີຊຳລະ / ບັນຊີ</label>
+            <select id="txPaymentMethod" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="CASH">💵 ເງິນສົດ (Cash)</option>
+              <option value="BANK">📱 BCELOne / ໂອນເງິນ</option>
+              <option value="CARD">💳 ບັດ (Card)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Note Description -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">ລາຍລະອຽດເພີ່ມເຕີມ (Note)</label>
+          <input type="text" id="txNote" placeholder="ເຊັ່ນ: ກິນເຂົ້າທ່ຽງ, ຊື້ເຄື່ອງກິນ, ຄ່າລົດ..." class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div class="pt-2 flex items-center justify-end space-x-2">
+          <button type="button" onclick="closeTransactionModal()" class="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl">ຍົກເລີກ</button>
+          <button type="submit" class="px-6 py-2.5 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md shadow-emerald-500/20">ບັນທຶກ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Set Monthly Budget -->
+  <div id="budgetModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
+        <h3 class="font-bold text-lg flex items-center space-x-2">
+          <i data-lucide="target" class="w-5 h-5 text-emerald-500"></i>
+          <span>ກຳນົດງົບປະມານລາຍຈ່າຍເດືອນ</span>
+        </h3>
+        <button onclick="closeBudgetModal()" class="p-1 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500">ລະບົບຈະຄິດໄລ່ ແລະ ແຈ້ງເຕືອນເມື່ອລາຍຈ່າຍປະຈຳເດືອນຂອງທ່ານໃກ້ຮອດ ຫຼື ເກີນເປົ້າໝາຍ.</p>
+
+      <form onsubmit="handleSaveBudget(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">ງົບປະມານສູງສຸດຕໍ່ເດືອນ</label>
+          <input type="number" id="budgetInputAmount" required min="0" step="any" placeholder="0" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeBudgetModal()" class="px-4 py-2 text-sm text-slate-500">ຍົກເລີກ</button>
+          <button type="submit" class="px-5 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-md">ບັນທຶກເປົ້າໝາຍ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Backup & Restore Data -->
+  <div id="backupModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
+        <h3 class="font-bold text-lg flex items-center space-x-2">
+          <i data-lucide="hard-drive" class="w-5 h-5 text-teal-500"></i>
+          <span>ສຳຮອງ ແລະ ກູ້ຄືນຂໍ້ມູນ</span>
+        </h3>
+        <button onclick="closeBackupModal()" class="p-1 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-sm">
+        <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+          <div>
+            <h4 class="font-semibold text-xs">ດາວໂຫຼດໄຟລ໌ສຳຮອງ (Backup JSON)</h4>
+            <p class="text-[11px] text-slate-500">ເກັບຂໍ້ມູນລາຍຮັບ-ລາຍຈ່າຍທັງໝົດໄວ້ໃນເຄື່ອງ</p>
+          </div>
+          <button onclick="exportJSONBackup()" class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700">ດາວໂຫຼດ</button>
+        </div>
+
+        <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+          <div>
+            <h4 class="font-semibold text-xs">ກູ້ຄືນຂໍ້ມູນ (Restore)</h4>
+            <p class="text-[11px] text-slate-500">ນຳເຂົ້າໄຟລ໌ JSON ທີ່ເຄີຍສຳຮອງໄວ້</p>
+          </div>
+          <label class="px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg hover:bg-teal-700 cursor-pointer">
+            ເລືອກໄຟລ໌
+            <input type="file" id="jsonFileInput" accept=".json" onchange="importJSONBackup(event)" class="hidden">
+          </label>
+        </div>
+
+        <div class="pt-2">
+          <button onclick="confirmClearData()" class="w-full py-2.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl font-medium border border-rose-200 dark:border-rose-900 transition">
+            ລຶບຂໍ້ມູນທັງໝົດໃນແອັບ (Clear All Data)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Categories Definition with Lao names and icons
+    const EXPENSE_CATEGORIES = [
+      { id: 'food', name: 'ອາຫານ & ເຄື່ອງດື່ມ', icon: 'utensils', color: 'bg-amber-100 text-amber-600' },
+      { id: 'transport', name: 'ຄ່າເດີນທາງ / ນ້ຳມັນ', icon: 'car', color: 'bg-blue-100 text-blue-600' },
+      { id: 'shopping', name: 'ຊື້ເຄື່ອງ / ຊັອບປິ້ງ', icon: 'shopping-bag', color: 'bg-purple-100 text-purple-600' },
+      { id: 'bills', name: 'ບິນຄ່ານ້ຳ-ຄ່າໄຟ', icon: 'zap', color: 'bg-yellow-100 text-yellow-600' },
+      { id: 'internet', name: 'ຄ່າເນັດ / ໂທລະສັບ', icon: 'wifi', color: 'bg-indigo-100 text-indigo-600' },
+      { id: 'rent', name: 'ຄ່າເຊົ່າ / ບ່ອນພັກ', icon: 'home', color: 'bg-emerald-100 text-emerald-600' },
+      { id: 'entertainment', name: 'ບັນເທີງ / ສັງສັນ', icon: 'music', color: 'bg-pink-100 text-pink-600' },
+      { id: 'health', name: 'ສຸຂະພາບ & ຢາ', icon: 'heart-pulse', color: 'bg-rose-100 text-rose-600' },
+      { id: 'education', name: 'ການສຶກສາ / ຮຽນ', icon: 'book-open', color: 'bg-teal-100 text-teal-600' },
+      { id: 'other_expense', name: 'ລາຍຈ່າຍອື່ນໆ', icon: 'more-horizontal', color: 'bg-slate-100 text-slate-600' },
+    ];
+
+    const INCOME_CATEGORIES = [
+      { id: 'salary', name: 'ເງິນເດືອນ', icon: 'briefcase', color: 'bg-emerald-100 text-emerald-600' },
+      { id: 'business', name: 'ທຸລະກິດ / ຂາຍເຄື່ອງ', icon: 'store', color: 'bg-teal-100 text-teal-600' },
+      { id: 'side_job', name: 'ລາຍໄດ້ເສີມ / ຟຣີແລນ', icon: 'laptop', color: 'bg-cyan-100 text-cyan-600' },
+      { id: 'bonus', name: 'ໂບນັດ / ລາງວັນ', icon: 'award', color: 'bg-amber-100 text-amber-600' },
+      { id: 'investment', name: 'ການລົງທຶນ / ດອກເບ້ຍ', icon: 'trending-up', color: 'bg-blue-100 text-blue-600' },
+      { id: 'gift', name: 'ຂອງຂວັນ / ໄດ້ຮັບຊ່ວຍເຫຼືອ', icon: 'gift', color: 'bg-pink-100 text-pink-600' },
+      { id: 'other_income', name: 'ລາຍຮັບອື່ນໆ', icon: 'plus-circle', color: 'bg-slate-100 text-slate-600' },
+    ];
+
+    // State Variables
+    let transactions = [];
+    let currentCurrency = 'LAK';
+    let currentFilterPeriod = 'all';
+    let currentTxType = 'EXPENSE';
+    let monthlyBudgetLimit = 0;
+    let categoryChart = null;
+    let trendsChart = null;
+
+    // Currency Formatting Config
+    const CURRENCY_SYMBOLS = {
+      'LAK': '₭',
+      'THB': '฿',
+      'USD': '$'
+    };
+
+    // Initialize App
+    window.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      initTheme();
+      initDateInput();
+      updateCategorySelect();
+      renderAll();
+      initPWA();
+      lucide.createIcons();
+    });
+
+    function loadData() {
+      try {
+        const storedTx = localStorage.getItem('lao_budget_transactions');
+        transactions = storedTx ? JSON.parse(storedTx) : getSampleData();
+
+        const storedCurr = localStorage.getItem('lao_budget_currency');
+        if (storedCurr) currentCurrency = storedCurr;
+        document.getElementById('currencySelector').value = currentCurrency;
+
+        const storedBudget = localStorage.getItem('lao_budget_monthly_limit');
+        if (storedBudget) monthlyBudgetLimit = parseFloat(storedBudget);
+      } catch (e) {
+        console.error('Error loading localStorage', e);
+        transactions = getSampleData();
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('lao_budget_transactions', JSON.stringify(transactions));
+      localStorage.setItem('lao_budget_currency', currentCurrency);
+      localStorage.setItem('lao_budget_monthly_limit', monthlyBudgetLimit.toString());
+    }
+
+    function getSampleData() {
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+      return [
+        { id: '1', type: 'INCOME', amount: 5000000, categoryId: 'salary', date: today, paymentMethod: 'BANK', note: 'ເງິນເດືອນປະຈຳເດືອນ' },
+        { id: '2', type: 'EXPENSE', amount: 45000, categoryId: 'food', date: today, paymentMethod: 'BANK', note: 'ກິນເຝີຕອນເຊົ້າ' },
+        { id: '3', type: 'EXPENSE', amount: 80000, categoryId: 'transport', date: yesterday, paymentMethod: 'CASH', note: 'ຕື່ມນ້ຳມັນລົດຈັກ' },
+        { id: '4', type: 'EXPENSE', amount: 150000, categoryId: 'internet', date: yesterday, paymentMethod: 'BANK', note: 'ຄ່າເນັດລາຍເດືອນ' },
+      ];
+    }
+
+    function formatNumber(num) {
+      return new Intl.NumberFormat('en-US').format(num);
+    }
+
+    function formatCurrency(amount) {
+      const sym = CURRENCY_SYMBOLS[currentCurrency] || '₭';
+      return `${sym} ${formatNumber(amount)}`;
+    }
+
+    function changeCurrency(newCurr) {
+      currentCurrency = newCurr;
+      saveData();
+      renderAll();
+    }
+
+    function setFilterPeriod(period) {
+      currentFilterPeriod = period;
+      document.querySelectorAll('.period-filter-btn').forEach(btn => {
+        if (btn.dataset.period === period) {
+          btn.classList.add('bg-emerald-600', 'text-white');
+          btn.classList.remove('bg-slate-200', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        } else {
+          btn.classList.remove('bg-emerald-600', 'text-white');
+          btn.classList.add('bg-slate-200', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        }
+      });
+      renderAll();
+    }
+
+    function filterTransactions() {
+      const now = new Date();
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const type = document.getElementById('typeFilter').value;
+
+      return transactions.filter(item => {
+        // Type filter
+        if (type !== 'ALL' && item.type !== type) return false;
+
+        // Search query
+        if (search) {
+          const cat = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES].find(c => c.id === item.categoryId);
+          const catName = cat ? cat.name.toLowerCase() : '';
+          const noteText = (item.note || '').toLowerCase();
+          if (!catName.includes(search) && !noteText.includes(search)) return false;
+        }
+
+        // Period filter
+        if (currentFilterPeriod === 'all') return true;
+
+        const txDate = new Date(item.date);
+        if (currentFilterPeriod === 'today') {
+          return txDate.toDateString() === now.toDateString();
+        } else if (currentFilterPeriod === 'week') {
+          const oneWeekAgo = new Date();
+          oneWeekAgo.setDate(now.getDate() - 7);
+          return txDate >= oneWeekAgo && txDate <= now;
+        } else if (currentFilterPeriod === 'month') {
+          return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+        }
+        return true;
+      });
+    }
+
+    function renderAll() {
+      const filtered = filterTransactions();
+      renderSummaryCards(filtered);
+      renderBudgetProgress();
+      renderCharts(filtered);
+      renderTransactionsList(filtered);
+      lucide.createIcons();
+    }
+
+    function renderSummaryCards(filtered) {
+      let income = 0;
+      let expense = 0;
+      let inCount = 0;
+      let exCount = 0;
+
+      filtered.forEach(tx => {
+        if (tx.type === 'INCOME') {
+          income += Number(tx.amount);
+          inCount++;
+        } else {
+          expense += Number(tx.amount);
+          exCount++;
+        }
+      });
+
+      const balance = income - expense;
+
+      document.getElementById('totalBalanceDisplay').textContent = formatCurrency(balance);
+      document.getElementById('totalIncomeDisplay').textContent = formatCurrency(income);
+      document.getElementById('totalExpenseDisplay').textContent = formatCurrency(expense);
+
+      document.getElementById('incomeCountDisplay').textContent = `${inCount} ລາຍການ`;
+      document.getElementById('expenseCountDisplay').textContent = `${exCount} ລາຍການ`;
+      document.getElementById('filteredItemsCount').textContent = `${filtered.length}`;
+    }
+
+    function renderBudgetProgress() {
+      // Calculate this current month's expenses
+      const now = new Date();
+      const thisMonthExpenses = transactions
+        .filter(t => t.type === 'EXPENSE')
+        .filter(t => {
+          const d = new Date(t.date);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        })
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+
+      document.getElementById('budgetSpentText').textContent = `ໃຊ້ຈ່າຍ: ${formatCurrency(thisMonthExpenses)}`;
+      document.getElementById('budgetLimitText').textContent = `ງົບປະມານ: ${formatCurrency(monthlyBudgetLimit)}`;
+
+      const progressBar = document.getElementById('budgetProgressBar');
+      const warningBox = document.getElementById('budgetWarningBox');
+      const warningMsg = document.getElementById('budgetWarningMessage');
+      const subtitle = document.getElementById('budgetSubtitle');
+
+      if (monthlyBudgetLimit <= 0) {
+        progressBar.style.width = '0%';
+        subtitle.textContent = 'ຍັງບໍ່ໄດ້ກຳນົດເປົ້າໝາຍ (ກົດ "ຕັ້ງເປົ້າໝາຍ" ເພື່ອເລີ່ມຕົ້ນ)';
+        warningBox.classList.add('hidden');
+        return;
+      }
+
+      const percent = Math.min(Math.round((thisMonthExpenses / monthlyBudgetLimit) * 100), 100);
+      progressBar.style.width = `${percent}%`;
+      subtitle.textContent = `ໃຊ້ໄປແລ້ວ ${percent}% ຂອງເປົ້າໝາຍເດືອນນີ້`;
+
+      if (thisMonthExpenses > monthlyBudgetLimit) {
+        progressBar.className = 'bg-rose-500 h-3 rounded-full transition-all duration-500';
+        warningBox.classList.remove('hidden');
+        warningMsg.textContent = `ທ່ານໃຊ້ຈ່າຍເກີນງົບປະມານແລ້ວ! (ເກີນ ${formatCurrency(thisMonthExpenses - monthlyBudgetLimit)})`;
+      } else if (percent >= 80) {
+        progressBar.className = 'bg-amber-500 h-3 rounded-full transition-all duration-500';
+        warningBox.classList.remove('hidden');
+        warningMsg.textContent = `ແຈ້ງເຕືອນ: ທ່ານໃຊ້ຈ່າຍໄປແລ້ວ ${percent}% ໃກ້ຈະຮອດຂີດຈຳກັດງົບປະມານ!`;
+      } else {
+        progressBar.className = 'bg-emerald-500 h-3 rounded-full transition-all duration-500';
+        warningBox.classList.add('hidden');
+      }
+    }
+
+    function renderCharts(filtered) {
+      // Category Breakdown Donut Chart
+      const categoryTotals = {};
+      filtered.filter(t => t.type === 'EXPENSE').forEach(t => {
+        categoryTotals[t.categoryId] = (categoryTotals[t.categoryId] || 0) + Number(t.amount);
+      });
+
+      const catLabels = [];
+      const catData = [];
+      const catColors = ['#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#ef4444', '#14b8a6', '#6366f1', '#64748b'];
+
+      Object.keys(categoryTotals).forEach((catId, idx) => {
+        const cat = EXPENSE_CATEGORIES.find(c => c.id === catId);
+        catLabels.push(cat ? cat.name : catId);
+        catData.push(categoryTotals[catId]);
+      });
+
+      const ctxCat = document.getElementById('categoryChart').getContext('2d');
+      if (categoryChart) categoryChart.destroy();
+
+      if (catData.length === 0) {
+        document.getElementById('noChartData').classList.remove('hidden');
+      } else {
+        document.getElementById('noChartData').classList.add('hidden');
+        categoryChart = new Chart(ctxCat, {
+          type: 'doughnut',
+          data: {
+            labels: catLabels,
+            datasets: [{
+              data: catData,
+              backgroundColor: catColors,
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Noto Sans Lao' } } }
+            }
+          }
+        });
+      }
+
+      // Trends Bar Chart (Last 6 Months)
+      const months = [];
+      const incomeData = [];
+      const expenseData = [];
+      const now = new Date();
+
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const mLabel = d.toLocaleDateString('lo-LA', { month: 'short' });
+        months.push(mLabel);
+
+        let mIn = 0;
+        let mEx = 0;
+        transactions.forEach(t => {
+          const td = new Date(t.date);
+          if (td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear()) {
+            if (t.type === 'INCOME') mIn += Number(t.amount);
+            else mEx += Number(t.amount);
+          }
+        });
+        incomeData.push(mIn);
+        expenseData.push(mEx);
+      }
+
+      const ctxTrends = document.getElementById('trendsChart').getContext('2d');
+      if (trendsChart) trendsChart.destroy();
+
+      trendsChart = new Chart(ctxTrends, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            { label: 'ລາຍຮັບ', data: incomeData, backgroundColor: '#10b981', borderRadius: 6 },
+            { label: 'ລາຍຈ່າຍ', data: expenseData, backgroundColor: '#f43f5e', borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Noto Sans Lao' } } }
+          },
+          scales: {
+            y: { grid: { display: false } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    function renderTransactionsList(filtered) {
+      const container = document.getElementById('transactionList');
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center border border-slate-200 dark:border-slate-700/60 text-slate-400">
+            <i data-lucide="inbox" class="w-10 h-10 mx-auto stroke-1 mb-2"></i>
+            <p class="text-sm">ຍັງບໍ່ມີລາຍການບັນທຶກ</p>
+            <button onclick="openTransactionModal()" class="mt-3 px-4 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-lg">
+              + ເພີ່ມລາຍການໃໝ່
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // Sort by date descending
+      const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      container.innerHTML = sorted.map(tx => {
+        const isIncome = tx.type === 'INCOME';
+        const catList = isIncome ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+        const cat = catList.find(c => c.id === tx.categoryId) || { name: 'ອື່ນໆ', icon: 'tag', color: 'bg-slate-100 text-slate-600' };
+
+        const paymentLabel = tx.paymentMethod === 'BANK' ? 'BCELOne' : tx.paymentMethod === 'CARD' ? 'ບັດ' : 'ເງິນສົດ';
+
+        return `
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-slate-200/80 dark:border-slate-700/60 flex items-center justify-between hover:shadow-md transition">
+            <div class="flex items-center space-x-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl ${cat.color} flex items-center justify-center shrink-0">
+                <i data-lucide="${cat.icon}" class="w-5 h-5"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center space-x-2">
+                  <h4 class="font-semibold text-sm truncate text-slate-900 dark:text-white">${cat.name}</h4>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500">${paymentLabel}</span>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">${tx.note || 'ບໍ່ມີລາຍລະອຽດ'} • ${tx.date}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3 shrink-0">
+              <div class="text-right">
+                <span class="font-bold text-sm md:text-base ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
+                  ${isIncome ? '+' : '-'}${formatCurrency(tx.amount)}
+                </span>
+              </div>
+              <div class="flex items-center space-x-1">
+                <button onclick="editTransaction('${tx.id}')" title="ແກ້ໄຂ" class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+                <button onclick="deleteTransaction('${tx.id}')" title="ລຶບ" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Modal Handlers
+    function openTransactionModal(editId = null) {
+      document.getElementById('txModal').classList.remove('hidden');
+      document.getElementById('txModal').classList.add('flex');
+      document.getElementById('txCurrencyPrefix').textContent = CURRENCY_SYMBOLS[currentCurrency] || '₭';
+
+      if (editId) {
+        const item = transactions.find(t => t.id === editId);
+        if (item) {
+          document.getElementById('txModalTitle').textContent = 'ແກ້ໄຂລາຍການ';
+          document.getElementById('txId').value = item.id;
+          document.getElementById('txAmount').value = item.amount;
+          document.getElementById('txDate').value = item.date;
+          document.getElementById('txPaymentMethod').value = item.paymentMethod || 'CASH';
+          document.getElementById('txNote').value = item.note || '';
+          setTxType(item.type);
+          document.getElementById('txCategory').value = item.categoryId;
+          return;
+        }
+      }
+
+      document.getElementById('txModalTitle').textContent = 'ເພີ່ມລາຍການໃໝ່';
+      document.getElementById('txForm').reset();
+      document.getElementById('txId').value = '';
+      initDateInput();
+      setTxType('EXPENSE');
+    }
+
+    function closeTransactionModal() {
+      document.getElementById('txModal').classList.add('hidden');
+      document.getElementById('txModal').classList.remove('flex');
+    }
+
+    function setTxType(type) {
+      currentTxType = type;
+      const tabExp = document.getElementById('tabExpense');
+      const tabInc = document.getElementById('tabIncome');
+
+      if (type === 'EXPENSE') {
+        tabExp.className = 'py-2 text-sm font-semibold rounded-lg bg-rose-500 text-white shadow-sm transition';
+        tabInc.className = 'py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-300 transition';
+      } else {
+        tabInc.className = 'py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white shadow-sm transition';
+        tabExp.className = 'py-2 text-sm font-semibold rounded-lg text-slate-600 dark:text-slate-300 transition';
+      }
+      updateCategorySelect();
+    }
+
+    function updateCategorySelect() {
+      const select = document.getElementById('txCategory');
+      const list = currentTxType === 'EXPENSE' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+      select.innerHTML = list.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
+
+    function initDateInput() {
+      document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+    }
+
+    function handleSaveTransaction(e) {
+      e.preventDefault();
+      const id = document.getElementById('txId').value;
+      const amount = parseFloat(document.getElementById('txAmount').value);
+      const categoryId = document.getElementById('txCategory').value;
+      const date = document.getElementById('txDate').value;
+      const paymentMethod = document.getElementById('txPaymentMethod').value;
+      const note = document.getElementById('txNote').value.trim();
+
+      if (id) {
+        // Update existing
+        const idx = transactions.findIndex(t => t.id === id);
+        if (idx !== -1) {
+          transactions[idx] = { id, type: currentTxType, amount, categoryId, date, paymentMethod, note };
+        }
+      } else {
+        // Add new
+        const newTx = {
+          id: Date.now().toString(),
+          type: currentTxType,
+          amount,
+          categoryId,
+          date,
+          paymentMethod,
+          note
+        };
+        transactions.unshift(newTx);
+      }
+
+      saveData();
+      closeTransactionModal();
+      renderAll();
+    }
+
+    function editTransaction(id) {
+      openTransactionModal(id);
+    }
+
+    function deleteTransaction(id) {
+      if (confirm('ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບລາຍການນີ້?')) {
+        transactions = transactions.filter(t => t.id !== id);
+        saveData();
+        renderAll();
+      }
+    }
+
+    // Budget Modal
+    function openBudgetModal() {
+      document.getElementById('budgetModal').classList.remove('hidden');
+      document.getElementById('budgetModal').classList.add('flex');
+      document.getElementById('budgetInputAmount').value = monthlyBudgetLimit || '';
+    }
+
+    function closeBudgetModal() {
+      document.getElementById('budgetModal').classList.add('hidden');
+      document.getElementById('budgetModal').classList.remove('flex');
+    }
+
+    function handleSaveBudget(e) {
+      e.preventDefault();
+      const val = parseFloat(document.getElementById('budgetInputAmount').value) || 0;
+      monthlyBudgetLimit = val;
+      saveData();
+      closeBudgetModal();
+      renderAll();
+    }
+
+    // Backup & Restore
+    function openBackupModal() {
+      document.getElementById('backupModal').classList.remove('hidden');
+      document.getElementById('backupModal').classList.add('flex');
+    }
+
+    function closeBackupModal() {
+      document.getElementById('backupModal').classList.add('hidden');
+      document.getElementById('backupModal').classList.remove('flex');
+    }
+
+    function exportJSONBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+        version: "1.0",
+        exportDate: new Date().toISOString(),
+        currency: currentCurrency,
+        budgetLimit: monthlyBudgetLimit,
+        transactions: transactions
+      }, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute('href', dataStr);
+      a.setAttribute('download', `lao_finance_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    function importJSONBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed && Array.isArray(parsed.transactions)) {
+            transactions = parsed.transactions;
+            if (parsed.currency) currentCurrency = parsed.currency;
+            if (parsed.budgetLimit !== undefined) monthlyBudgetLimit = parsed.budgetLimit;
+            saveData();
+            renderAll();
+            alert('ກູ້ຄືນຂໍ້ມູນສຳເລັດແລ້ວ!');
+            closeBackupModal();
+          } else {
+            alert('ຮູບແບບໄຟລ໌ JSON ບໍ່ຖືກຕ້ອງ!');
+          }
+        } catch (err) {
+          alert('ບໍ່ສາມາດອ່ານໄຟລ໌ນີ້ໄດ້: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmClearData() {
+      if (confirm('ຄຳເຕືອນ: ຂໍ້ມູນລາຍການທັງໝົດຈະຖືກລຶບອອກ! ທ່ານຕ້ອງການສືບຕໍ່ແທ້ບໍ?')) {
+        transactions = [];
+        saveData();
+        renderAll();
+        closeBackupModal();
+      }
+    }
+
+    // Export to Excel / CSV with UTF-8 BOM
+    function exportToCSV() {
+      if (transactions.length === 0) {
+        alert('ບໍ່ມີຂໍ້ມູນໃຫ້ Export');
+        return;
+      }
+
+      // Add UTF-8 BOM so Lao characters open cleanly in Excel
+      let csvContent = "\uFEFF";
+      csvContent += "ID,ປະເພດ,ຈຳນວນເງິນ,ສະກຸນເງິນ,ໝວດໝູ່,ວັນທີ,ວິທີຊຳລະ,ລາຍລະອຽດ\n";
+
+      transactions.forEach(t => {
+        const isIncome = t.type === 'INCOME';
+        const catList = isIncome ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+        const cat = catList.find(c => c.id === t.categoryId);
+        const catName = cat ? cat.name : t.categoryId;
+        const typeLabel = isIncome ? 'ລາຍຮັບ' : 'ລາຍຈ່າຍ';
+        const cleanNote = (t.note || '').replace(/,/g, ' ');
+
+        csvContent += `"${t.id}","${typeLabel}","${t.amount}","${currentCurrency}","${catName}","${t.date}","${t.paymentMethod}","${cleanNote}"\n`;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `ລາຍຮັບ-ລາຍຈ່າຍ_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+
+    // Theme Management
+    function initTheme() {
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('themeIcon').setAttribute('data-lucide', 'moon');
+      }
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.theme = isDark ? 'dark' : 'light';
+      document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+      lucide.createIcons();
+    }
+
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // PWA Installation handling
+    let deferredPrompt;
+    function initPWA() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
+      }
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const installBtn = document.getElementById('pwaInstallBtn');
+        if (installBtn) installBtn.classList.remove('hidden');
+      });
+    }
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted install');
+          }
+          deferredPrompt = null;
+        });
+      }
+    }
+  </script>
+</body>
+</html>
